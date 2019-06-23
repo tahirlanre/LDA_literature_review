@@ -1,6 +1,8 @@
 from nltk.tokenize import RegexpTokenizer
-from stop_words import get_stop_words
+from gensim.utils import simple_preprocess
+from gensim.parsing.preprocessing import STOPWORDS
 from nltk.stem.porter import PorterStemmer
+from nltk.stem import WordNetLemmatizer, SnowballStemmer
 from gensim import corpora, models
 import gensim
 
@@ -9,39 +11,35 @@ with open('data/abstracts.txt', 'r') as file:
     abstracts = file.read().lower()
 abstract_set = abstracts.split('\n\n')
 
-#creare Tokenizer
-tokenizer = RegexpTokenizer(r'\w+')
-
-#create English stop words list
-en_stop = get_stop_words('en')
-
 #create p_stemmer of class PorterStemmer
 p_stemmer = PorterStemmer()
 
-texts = []
+def lemmatize_stemming(text):
+    return p_stemmer.stem(WordNetLemmatizer().lemmatize(text, pos='v'))
+
+def preprocess(text):
+    processed_text = []
+    
+    #create token and remove stop words
+    for token in gensim.utils.simple_preprocess(text):
+        if token not in gensim.parsing.preprocessing.STOPWORDS and len(token) > 3:
+            processed_text.append(lemmatize_stemming(token))
+    return processed_text
+    
+processed_docs = []
 
 for abstract in abstract_set:
-    #create token from each token
-    raw = abstract.lower()
-    tokens = tokenizer.tokenize(raw)
-    
-    #remove stop words from tokens
-    stopped_tokens = [i for i in tokens if not i in en_stop]
-    
-    #stem token
-    stemmed_tokens = [p_stemmer.stem(i) for i in stopped_tokens]
-    
-    texts.append(stemmed_tokens)
+    processed_docs.append(preprocess(abstract))
 
-dictionary = corpora.Dictionary(texts)
+#create dictionary from processed docs
+dictionary = corpora.Dictionary(processed_docs)
 
-corpus = [dictionary.doc2bow(text) for text in texts]
+#convert text to Bag of Word
+corpus = [dictionary.doc2bow(doc) for doc in processed_docs]
 
-ldamodel_1 = gensim.models.ldamodel.LdaModel(corpus, num_topics=5, id2word = dictionary, passes=100)
-ldamodel_2 = gensim.models.ldamodel.LdaModel(corpus, num_topics=4, id2word = dictionary, passes=100)
+#Run LDA
+lda_model = gensim.models.LdaMulticore(corpus, num_topics=5, id2word = dictionary, passes=10)
 
-print("=========== Model 1 ===========")
-print(ldamodel_1.print_topics(num_topics=5, num_words=4))
-
-print("=========== Model 2 ===========")
-print(ldamodel_2.print_topics(num_topics=4, num_words=4))
+for idx, topic in lda_model.print_topics(-1):
+    print("Topic: {} \nWords: {}".format(idx, topic ))
+    print("\n")
