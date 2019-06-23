@@ -7,7 +7,7 @@ from gensim import corpora, models
 import gensim
 
 #Extract abstracts from txt file and put them in a list
-with open('data/abstracts.txt', 'r') as file:
+with open('data/abstracts.txt', mode='r', encoding='utf-8-sig') as file:
     abstracts = file.read().lower()
 abstract_set = abstracts.split('\n\n')
 
