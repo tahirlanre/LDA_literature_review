@@ -44,7 +44,7 @@ dictionary = corpora.Dictionary(processed_docs)
 corpus = [dictionary.doc2bow(doc) for doc in processed_docs]
 
 #Run LDA
-lda_model = gensim.models.LdaMulticore(corpus, num_topics=5, id2word=dictionary, passes=10)
+lda_model = gensim.models.LdaMulticore(corpus, num_topics=4, id2word=dictionary, passes=10)
 
 for idx, topic in lda_model.print_topics(-1):
     print("Topic: {} \nWords: {}".format(idx, topic ))
