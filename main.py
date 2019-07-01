@@ -5,8 +5,11 @@ import gensim
 from gensim import corpora
 import pyLDAvis.gensim
 import numpy as np
+import pandas as pd
 
 from gensim.models import Phrases
+
+from sklearn.manifold import TSNE
 
 # SOME_FIXED_SEED = 42
 
@@ -59,9 +62,8 @@ dictionary = corpora.Dictionary(processed_docs)
 # convert text to Bag of Word
 corpus = [dictionary.doc2bow(doc) for doc in processed_docs]
 
-#Run LDA
-lda_model = gensim.models.LdaMulticore(corpus, num_topics=4, id2word=dictionary, passes=10)
-
+# Run LDA
+lda_model = gensim.models.LdaMulticore(corpus, num_topics=3, id2word=dictionary, passes=10)
 
 for idx, topic in lda_model.print_topics(-1):
     print("Topic: {} \nWords: {}".format(idx, topic))
